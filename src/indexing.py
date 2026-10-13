@@ -1,4 +1,5 @@
 from pathlib import Path
+from langchain_text_splitters import Language, RecursiveCharacterTextSplitter
 
 
 def find_files(raw_dir: str) -> dict[str, list[Path]]:
@@ -16,6 +17,19 @@ def find_files(raw_dir: str) -> dict[str, list[Path]]:
         data_dict[key].sort()
     return data_dict
 
+
+def make_splitters(max_chunk_size: int) -> dict[
+        str, RecursiveCharacterTextSplitter]:
+    nb = max_chunk_size // 10
+    py_splitter = RecursiveCharacterTextSplitter.from_language(
+        language=Language.PYTHON, chunk_size=max_chunk_size,
+        chunk_overlap=nb, add_start_index=True)
+    md_splitter = RecursiveCharacterTextSplitter.from_language(
+        language=Language.MARKDOWN, chunk_size=max_chunk_size,
+        chunk_overlap=nb, add_start_index=True)
+    splitter_dict = {".py": py_splitter, ".md": md_splitter,
+                     ".txt": md_splitter}
+    return splitter_dict
 
 def test():
     data_dict = find_files("data/raw")
