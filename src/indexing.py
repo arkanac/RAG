@@ -1,5 +1,6 @@
 from pathlib import Path
 from langchain_text_splitters import Language, RecursiveCharacterTextSplitter
+from src.models import Chunk
 
 
 def find_files(raw_dir: str) -> dict[str, list[Path]]:
@@ -31,7 +32,23 @@ def make_splitters(max_chunk_size: int) -> dict[
                      ".txt": md_splitter}
     return splitter_dict
 
-def test():
+
+def chunk_file(path: Path, splitter: RecursiveCharacterTextSplitter
+               ) -> list[Chunk]:
+    text = path.read_text(encoding='utf-8', errors='replace')
+    docs = splitter.create_documents([text])
+    chunks: list[Chunk] = []
+    for doc in docs:
+        start = doc.metadata["start_index"]
+        if start == -1:
+            continue
+        end = start + len(doc.page_content)
+        chunks.append(Chunk(file_path=str(path), first_character_index=start,
+                            last_character_index=end, text=doc.page_content))
+    return chunks
+
+
+def test() -> None:
     data_dict = find_files("data/raw")
     for key in data_dict:
         le = len(data_dict[key])

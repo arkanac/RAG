@@ -13,6 +13,14 @@ class MinimalSource(BaseModel):
     last_character_index: int
 
 
+class Chunk(MinimalSource):
+
+    file_path: str
+    first_character_index: int
+    last_character_index: int
+    text: str
+
+
 class UnansweredQuestion(BaseModel):
     """A question without an answer."""
 
