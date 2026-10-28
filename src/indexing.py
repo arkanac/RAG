@@ -1,6 +1,7 @@
 from pathlib import Path
 from langchain_text_splitters import Language, RecursiveCharacterTextSplitter
 from src.models import Chunk
+from tqdm import tqdm
 
 
 def find_files(raw_dir: str) -> dict[str, list[Path]]:
@@ -48,8 +49,26 @@ def chunk_file(path: Path, splitter: RecursiveCharacterTextSplitter
     return chunks
 
 
+def chunk_corpus(raw_dir: str, max_chunk_size: int) -> list[Chunk]:
+    splitters = make_splitters(max_chunk_size)
+    file_dict = find_files(raw_dir)
+    chunks: list[Chunk] = []
+    for extension, paths in file_dict.items():
+        for path in tqdm(paths):
+            try:
+                chunk_lst = chunk_file(path, splitters[extension])
+            except OSError as err:
+                print(f"{err} at path {path}")
+                continue
+            chunks.extend(chunk_lst)
+    return chunks
+
+
+
 def test() -> None:
-    data_dict = find_files("data/raw")
-    for key in data_dict:
-        le = len(data_dict[key])
-        print(f"{key}:{le}")
+    c_list = chunk_corpus("data/raw", 2000)
+    print(len(c_list))
+
+
+if "__main__" == __name__:
+    test()
