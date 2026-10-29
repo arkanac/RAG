@@ -84,5 +84,4 @@ def test() -> None:
     print(err_count)
 
 
-if "__main__" == __name__:
-    test()
+
