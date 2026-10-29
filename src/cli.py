@@ -1,17 +1,18 @@
-"""Command-line interface exposed through Python Fire."""
+from src.chunking import Chunker
+from src.indexing import Indexer
 
 
 class RagCLI:
     """RAG commands: index, search, answer, evaluate."""
 
-    def index(
-        self,
-        max_chunk_size: int = 2000,
-        raw_dir: str = "data/raw",
-        processed_dir: str = "data/processed",
-    ) -> None:
+    def index(self, max_chunk_size: int = 2000, raw_dir: str = "data/raw",
+              processed_dir: str = "data/processed") -> None:
         """Chunk the corpus and persist the index."""
-        print(f"[TODO] index {max_chunk_size=} {raw_dir=}")
+        chunker = Chunker(max_chunk_size)
+        chunks = chunker.chunk_corpus(raw_dir)
+        indexer = Indexer()
+        indexer.build_index(chunks, processed_dir)
+        print(f"Ingestion complete! Indices saved under {processed_dir}")
 
     def search(self, query: str, k: int = 10) -> None:
         """Print the top-k sources for a single query."""

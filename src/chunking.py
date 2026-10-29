@@ -82,6 +82,3 @@ def test() -> None:
             err_count += 1
     print(len(c_list))
     print(err_count)
-
-
-

@@ -4,6 +4,7 @@ from src.chunking import Chunker
 import bm25s
 import json
 
+
 class Indexer:
     def build_index(self, chunks: list[Chunk], processed_dir: str) -> None:
         Path(processed_dir).mkdir(parents=True, exist_ok=True)
@@ -27,11 +28,13 @@ def test():
     chunks = ch.chunk_corpus("data/raw")
     ind = Indexer()
     ind.build_index(chunks, "data/processed")
-    question = bm25s.tokenize("What are the default values for FP8_MIN and FP8_MAX constants in vLLM's triton_flash_attention module?", stopwords="en", show_progress=False)
+    question = bm25s.tokenize("What are the default values for FP8_MIN and"
+                              "FP8_MAX constants in vLLM's triton_flash_"
+                              "attention module?", stopwords="en",
+                              show_progress=False)
     ids, score = (ind.retriever.retrieve(question, k=10))
-    for num, s in zip(ids[0], score[0]):
-        print(chunks[num].file_path)
-        print(s)
+    
+
 
 if "__main__" == __name__:
     test()
