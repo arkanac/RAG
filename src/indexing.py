@@ -11,11 +11,10 @@ class Indexer:
         texts: list[str] = []
         texts += [(chunk.file_path + " " + chunk.text) for chunk in chunks]
         tokens = bm25s.tokenize(texts, stopwords="en")
-        retriever = bm25s.BM25()
-        retriever.index(tokens)
-        self.retriever = retriever
+        bm25 = bm25s.BM25()
+        bm25.index(tokens)
         path = Path(processed_dir) / "bm25"
-        retriever.save(path)
+        bm25.save(path)
         c_path = Path(processed_dir) / "chunks.json"
         chunk_list: list[dict] = []
         with open(c_path, "w", encoding="utf-8") as f:
@@ -33,7 +32,6 @@ def test():
                               "attention module?", stopwords="en",
                               show_progress=False)
     ids, score = (ind.retriever.retrieve(question, k=10))
-    
 
 
 if "__main__" == __name__:

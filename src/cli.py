@@ -8,6 +8,7 @@ class RagCLI:
     def index(self, max_chunk_size: int = 2000, raw_dir: str = "data/raw",
               processed_dir: str = "data/processed") -> None:
         """Chunk the corpus and persist the index."""
+
         chunker = Chunker(max_chunk_size)
         chunks = chunker.chunk_corpus(raw_dir)
         indexer = Indexer()
