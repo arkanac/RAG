@@ -1,12 +1,13 @@
 from src.chunking import Chunker
 from src.indexing import Indexer
-import bm25s
-
+from src.retrieval import Retriever
+import json
+import tqdm
 
 class RagCLI:
     """RAG commands: index, search, answer, evaluate."""
 
-    def index(self, max_chunk_size: int = 2000, raw_dir: str = "data/raw",
+    def index(self, max_chunk_size: int = 1000, raw_dir: str = "data/raw",
               processed_dir: str = "data/processed") -> None:
         """Chunk the corpus and persist the index."""
 
@@ -16,17 +17,21 @@ class RagCLI:
         indexer.build_index(chunks, processed_dir)
         print(f"Ingestion complete! Indices saved under {processed_dir}")
 
-    def search(self, query: str, k: int = 10) -> None:
+    def search(self, query: str, k: int = 10, processed_dir: str = "data/processed") -> None:
         """Print the top-k sources for a single query."""
-        tokens = bm25s.tokenize(query, stopwords="en", show_progress=False)
-        self.bm25.retieve(tokens)
-        print(f"[TODO] search {query=} {k=}")
+        retriever = Retriever(processed_dir)
+        result = retriever.search(query, k)
+        for source in result:
+            print(f"Path: {source.file_path} | First/last index:"
+                  f" {source.first_character_index}/"
+                  f"{source.last_character_index}")
 
-    def search_dataset(
-        self, dataset_path: str, save_directory: str, k: int = 10
-    ) -> None:
+    def search_dataset(self, dataset_path: str, save_directory: str,
+                       k: int = 10, processed_dir: str = "data/processed",) -> None:
         """Search a whole dataset and save StudentSearchResults."""
-        print(f"[TODO] search_dataset {dataset_path=} {k=}")
+        retriever = Retriever(processed_dir)
+        retriever.search_dataset(dataset_path, save_directory, k)
+
 
     def answer(self, query: str, k: int = 10) -> None:
         """Answer a single query from retrieved context."""

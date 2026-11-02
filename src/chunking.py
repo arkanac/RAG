@@ -70,7 +70,7 @@ class Chunker:
 
 def test() -> None:
     err_count = 0
-    c_list = Chunker(2000).chunk_corpus("data/raw")
+    c_list = Chunker(1000).chunk_corpus("data/raw")
     dct: dict[str, str] = {}
     for chunk in c_list:
         if chunk.file_path not in dct:
