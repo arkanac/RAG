@@ -1,5 +1,6 @@
 from src.chunking import Chunker
 from src.indexing import Indexer
+import bm25s
 
 
 class RagCLI:
@@ -17,6 +18,8 @@ class RagCLI:
 
     def search(self, query: str, k: int = 10) -> None:
         """Print the top-k sources for a single query."""
+        tokens = bm25s.tokenize(query, stopwords="en", show_progress=False)
+        self.bm25.retieve(tokens)
         print(f"[TODO] search {query=} {k=}")
 
     def search_dataset(
