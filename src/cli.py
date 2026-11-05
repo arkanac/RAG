@@ -3,6 +3,7 @@ from src.indexing import Indexer
 from src.retrieval import Retriever
 from src.evaluation import evaluate
 
+
 class RagCLI:
     """RAG commands: index, search, answer, evaluate."""
 
@@ -16,7 +17,8 @@ class RagCLI:
         indexer.build_index(chunks, processed_dir)
         print(f"Ingestion complete! Indices saved under {processed_dir}")
 
-    def search(self, query: str, k: int = 10, processed_dir: str = "data/processed") -> None:
+    def search(self, query: str, k: int = 10,
+               processed_dir: str = "data/processed") -> None:
         """Print the top-k sources for a single query."""
         retriever = Retriever(processed_dir)
         result = retriever.search(query, k)
@@ -26,11 +28,11 @@ class RagCLI:
                   f"{source.last_character_index}")
 
     def search_dataset(self, dataset_path: str, save_directory: str,
-                       k: int = 10, processed_dir: str = "data/processed",) -> None:
+                       k: int = 10, processed_dir: str = "data/processed"
+                       ) -> None:
         """Search a whole dataset and save StudentSearchResults."""
         retriever = Retriever(processed_dir)
         retriever.search_dataset(dataset_path, save_directory, k)
-
 
     def answer(self, query: str, k: int = 10) -> None:
         """Answer a single query from retrieved context."""

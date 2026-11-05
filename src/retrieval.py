@@ -2,7 +2,8 @@ import bm25s
 from pathlib import Path
 import json
 from tqdm import tqdm
-from src.models import Chunk, MinimalSource, RagDataset, MinimalSearchResults, StudentSearchResults
+from src.models import (Chunk, MinimalSource, RagDataset, MinimalSearchResults,
+                        StudentSearchResults)
 
 
 class Retriever:
@@ -29,7 +30,8 @@ class Retriever:
             source_list.append(min_s)
         return source_list
 
-    def search_dataset(self, dataset_path: str, save_directory: str, k: int) -> None:
+    def search_dataset(self, dataset_path: str, save_directory: str, k: int
+                       ) -> None:
         with open(dataset_path, encoding="utf-8") as f:
             rag_questions = json.load(f)
             dataset = RagDataset.model_validate(rag_questions)
@@ -48,12 +50,3 @@ class Retriever:
                   encoding="utf-8") as f:
             f.write(stud_search_r.model_dump_json(indent=2))
         print(f"Saved student_research_results to {path1}/{path2}")
-
-def test():
-    re = Retriever("data/processed")
-    print(re.search_dataset("data/datasets/UnansweredQuestions/dataset_docs_public.json", 10))
-
-
-if "__main__" == __name__:
-    test()
-    
