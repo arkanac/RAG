@@ -1,6 +1,7 @@
 from src.chunking import Chunker
 from src.indexing import Indexer
 from src.retrieval import Retriever
+from src.evaluation import evaluate
 
 class RagCLI:
     """RAG commands: index, search, answer, evaluate."""
@@ -35,17 +36,12 @@ class RagCLI:
         """Answer a single query from retrieved context."""
         print(f"[TODO] answer {query=} {k=}")
 
-    def answer_dataset(
-        self, student_search_results_path: str, save_directory: str
-    ) -> None:
+    def answer_dataset(self, student_search_results_path: str,
+                       save_directory: str) -> None:
         """Generate answers and save StudentSearchResultsAndAnswer."""
         print(f"[TODO] answer_dataset {student_search_results_path=}")
 
-    def evaluate(
-        self,
-        student_search_results_path: str,
-        dataset_path: str,
-        k: int = 10,
-    ) -> None:
+    def evaluate(self, student_search_results_path: str, dataset_path: str,
+                 k: int = 10) -> None:
         """Report recall@k against a ground-truth dataset."""
-        print(f"[TODO] evaluate {dataset_path=} {k=}")
+        evaluate(student_search_results_path, dataset_path)
