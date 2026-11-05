@@ -1,13 +1,11 @@
 from src.chunking import Chunker
 from src.indexing import Indexer
 from src.retrieval import Retriever
-import json
-import tqdm
 
 class RagCLI:
     """RAG commands: index, search, answer, evaluate."""
 
-    def index(self, max_chunk_size: int = 1000, raw_dir: str = "data/raw",
+    def index(self, max_chunk_size: int = 1900, raw_dir: str = "data/raw",
               processed_dir: str = "data/processed") -> None:
         """Chunk the corpus and persist the index."""
 
