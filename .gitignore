@@ -7,3 +7,5 @@ __pycache__/
 data/
 moulinette*
 .env
+robustness.sh
+chunk_sweep.sh
