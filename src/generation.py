@@ -31,7 +31,8 @@ class TransformersEngine:
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model: Any = AutoModelForCausalLM.from_pretrained(model_name)
 
-    def generate(self, system_prompt: str, user_prompt: str, max_new_tokens: int = 256) -> str:
+    def generate(self, system_prompt: str, user_prompt: str,
+                 max_new_tokens: int = 256) -> str:
         """Generate an answer for the given prompt."""
         messages = [{"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},]

@@ -8,6 +8,9 @@ from src.models import (Chunk, MinimalSource, RagDataset, MinimalSearchResults,
 
 class Retriever:
     def __init__(self, processed_dir: str) -> None:
+        if not (Path(processed_dir) / "bm25").is_dir():
+            raise ValueError(f"no index found in {processed_dir}, "
+                             "run the 'index' command first")
         self.bm25 = bm25s.BM25.load(Path(processed_dir) / "bm25")
         self.chunks = []
         with open(Path(processed_dir) / "chunks.json", "r", encoding="utf-8"
@@ -17,6 +20,7 @@ class Retriever:
                             in chunk_list]
 
     def search(self, query: str, k: int) -> list[MinimalSource]:
+        k = min(k, len(self.chunks))
         tokens = bm25s.tokenize(query, stopwords="en", show_progress=False)
         ids, _ = self.bm25.retrieve(tokens, k=k)
         source_list: list[MinimalSource] = []
