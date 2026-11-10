@@ -14,7 +14,11 @@ SYSTEM_PROMPT = (
     "Use ONLY the context below to answer.\n"
     "If the answer is not in the context, say: "
     "\"I could not find the answer in the provided sources.\"\n"
-    "Answer concisely, in a few sentences.\n"
+    "Answer in 2 or 3 sentences maximum.\n"
+    "Never invent URLs, file names or parameters that are not in the "
+    "context.\n"
+    "Do not copy long code blocks: quote only the exact command, flag or "
+    "name that answers the question.\n"
     "When you use a passage, cite its number, like [1]."
 )
 

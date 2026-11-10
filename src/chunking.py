@@ -3,12 +3,25 @@ from langchain_text_splitters import Language, RecursiveCharacterTextSplitter
 from src.models import Chunk
 from tqdm import tqdm
 
+CODE_DIRS = {"vllm"}
+DOC_DIRS = {"docs"}
+
 
 class Chunker:
     def __init__(self, max_chunk_size: int) -> None:
         self.mx_ck_size = max_chunk_size
         self.splitters: dict[str, RecursiveCharacterTextSplitter
                              ] = self._make_splitters(self.mx_ck_size)
+
+    @staticmethod
+    def _is_useful(path: Path, root: Path) -> bool:
+        """Keep only the files that can contain an answer."""
+        parts = path.relative_to(root).parts
+        at_root = len(parts) == 2
+        top_dir = parts[1] if len(parts) > 2 else ""
+        if path.suffix == ".py":
+            return top_dir in CODE_DIRS
+        return at_root or top_dir in DOC_DIRS
 
     def find_files(self, raw_dir: str) -> dict[str, list[Path]]:
         data = Path(raw_dir)
@@ -17,7 +30,7 @@ class Chunker:
             return {}
         data_dict: dict[str, list[Path]] = {".py": [], ".md": [], ".txt": []}
         for file in data.rglob("*"):
-            if file.is_file():
+            if file.is_file() and self._is_useful(file, data):
                 s = file.suffix
                 if s in data_dict:
                     data_dict[s].append(file)
