@@ -9,7 +9,7 @@ from .validation import validate_chunk_size, validate_k
 class RagCLI:
     """RAG commands: index, search, answer, evaluate."""
 
-    def index(self, max_chunk_size: int = 1900, raw_dir: str = "data/raw",
+    def index(self, max_chunk_size: int = 2000, raw_dir: str = "data/raw",
               processed_dir: str = "data/processed") -> None:
         """Chunk the corpus and persist the index."""
         size = validate_chunk_size(max_chunk_size)
