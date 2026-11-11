@@ -7,7 +7,7 @@ from typing import Any
 from .models import (MinimalAnswer, MinimalSource, StudentSearchResults,
                      StudentSearchResultsAndAnswer)
 
-MAX_CONTEXT_SOURCES = 5
+MAX_CONTEXT_SOURCES = 3
 MODEL_NAME = "Qwen/Qwen3-0.6B"
 SYSTEM_PROMPT = (
     "You are an assistant that answers questions about the vLLM codebase.\n"
@@ -32,7 +32,7 @@ class TransformersEngine:
         self.model: Any = AutoModelForCausalLM.from_pretrained(model_name)
 
     def generate(self, system_prompt: str, user_prompt: str,
-                 max_new_tokens: int = 256) -> str:
+                 max_new_tokens: int = 150) -> str:
         """Generate an answer for the given prompt."""
         messages = [{"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},]
