@@ -1,9 +1,11 @@
+import uvicorn
 from src.chunking import Chunker
 from src.indexing import Indexer
 from src.retrieval import Retriever
 from src.evaluation import evaluate
 from .generation import TransformersEngine, answer_question, generate_answers
 from .validation import validate_chunk_size, validate_k
+from .api import create_app
 
 
 class RagCLI:
@@ -64,3 +66,8 @@ class RagCLI:
                  k: int = 10) -> None:
         """Report recall@k against a ground-truth dataset."""
         evaluate(student_search_results_path, dataset_path)
+
+    def api(self, host: str = "127.0.0.1", port: int = 8000,
+            processed_dir: str = "data/processed") -> None:
+        app = create_app(processed_dir)
+        uvicorn.run(app, host=host, port=port)
