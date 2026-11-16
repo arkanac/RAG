@@ -1,5 +1,6 @@
 """Answer generation with Qwen."""
 import json
+import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from pathlib import Path
 from tqdm import tqdm
@@ -26,10 +27,16 @@ SYSTEM_PROMPT = (
 class TransformersEngine:
     """Run Qwen locally with transformers."""
 
-    def __init__(self, model_name: str = MODEL_NAME) -> None:
+    def __init__(self, model_name: str = MODEL_NAME, device: str | None = None
+                 ) -> None:
         """Load the tokenizer and the model once."""
+        if device is None:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = device
+        model_cls: Any = AutoModelForCausalLM
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model: Any = AutoModelForCausalLM.from_pretrained(model_name)
+        self.model: Any = model_cls.from_pretrained(model_name)
+        self.model.to(self.device)
 
     def generate(self, system_prompt: str, user_prompt: str,
                  max_new_tokens: int = 256) -> str:
@@ -42,7 +49,7 @@ class TransformersEngine:
             add_generation_prompt=True,
             enable_thinking=False,
         )
-        inputs = self.tokenizer(text, return_tensors="pt")
+        inputs = self.tokenizer(text, return_tensors="pt").to(self.device)
         output = self.model.generate(**inputs, max_new_tokens=max_new_tokens,
                                      do_sample=False)
         new_tokens = output[0][inputs.input_ids.shape[1]:]

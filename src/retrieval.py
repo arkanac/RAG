@@ -53,4 +53,4 @@ class Retriever:
         with open(path1 / path2, "w",
                   encoding="utf-8") as f:
             f.write(stud_search_r.model_dump_json(indent=2))
-        print(f"Saved student_research_results to {path1}/{path2}")
+        print(f"Saved student_search_results to {path1}/{path2}")
