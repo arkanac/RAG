@@ -287,6 +287,26 @@ wrong parameter picked from a correct context, and a few invented URLs.
   format, invalid value, Ctrl+C) into a clean message. A script runs 26 edge
   cases and checks that none produces a traceback.
 
+## Bonus
+
+### 5. Local HTTP API
+
+A small FastAPI server exposes the system over HTTP:
+
+```bash
+uv run python -m src api --port 8000 --processed_dir data/processed
+```
+
+| Route | Parameters | Returns |
+|---|---|---|
+| `GET /health` | none | `{"status": "ok"}` |
+| `GET /search` | `query`, `k` (default 10) | `MinimalSearchResults` |
+| `GET /answer` | `query`, `k` (default 5) | `MinimalAnswer` |
+
+The index is loaded once at startup; Qwen is loaded on the first `/answer`
+call only, on CPU. Invalid parameters return a 400 or 422 error, never a
+traceback. An interactive page is generated at `http://127.0.0.1:8000/docs`.
+
 ## Challenges faced
 
 - **Running Qwen with vLLM.** The CPU nightly build of vLLM was only published

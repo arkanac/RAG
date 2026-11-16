@@ -4,7 +4,7 @@ import uuid
 from fastapi import FastAPI, HTTPException
 
 from .generation import TransformersEngine, answer_question
-from .models import MinimalAnswer, MinimalSearchResults
+from .models import MinimalAnswer, MinimalSearchResults, HealthStatus
 from .retrieval import Retriever
 from .validation import validate_k
 
@@ -27,9 +27,11 @@ def create_app(processed_dir: str) -> FastAPI:
     engines: dict[str, TransformersEngine] = {}
 
     @app.get("/health")
-    def health() -> dict[str, str]:
-        """Tell that the server is running."""
-        return {"status": "ok"}
+    def health() -> HealthStatus:
+        """Report that the server runs, with the index size and model state."""
+        return HealthStatus(status="ok",
+                            chunks=len(retriever.chunks),
+                            model_loaded="cpu" in engines)
 
     @app.get("/search")
     def search(query: str, k: int = 10) -> MinimalSearchResults:

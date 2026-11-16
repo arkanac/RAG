@@ -64,3 +64,11 @@ class StudentSearchResultsAndAnswer(BaseModel):
 class Chunk(MinimalSource):
 
     text: str
+
+
+class HealthStatus(BaseModel):
+    """State of the API server."""
+
+    status: str
+    chunks: int
+    model_loaded: bool
