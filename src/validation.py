@@ -1,7 +1,7 @@
 """Validation of CLI parameters."""
 
 MAX_CHUNK_SIZE_LIMIT = 2000
-METHODS = ("bm25", "semantic")
+METHODS = ("bm25", "semantic", "hybrid")
 
 
 def validate_method(method: object) -> str:

@@ -6,6 +6,9 @@ from src.models import (Chunk, MinimalSource, RagDataset, MinimalSearchResults,
                         StudentSearchResults)
 from .embedding import SemanticIndex
 
+RRF_K = 60
+RRF_CANDIDATES = 50
+
 
 class Retriever:
     def __init__(self, processed_dir: str) -> None:
@@ -43,6 +46,8 @@ class Retriever:
         k = min(k, len(self.chunks))
         if method == "semantic":
             ids = self._semantic_index().search(query, k)
+        elif method == "hybrid":
+            ids = self._hybrid_ids(query, k)
         else:
             ids = self._bm25_ids(query, k)
         return [MinimalSource(file_path=self.chunks[i].file_path,
@@ -72,3 +77,16 @@ class Retriever:
                   encoding="utf-8") as f:
             f.write(stud_search_r.model_dump_json(indent=2))
         print(f"Saved student_search_results to {path1}/{path2}")
+
+    def _hybrid_ids(self, query: str, k: int) -> list[int]:
+        """Fuse the BM25 and semantic rankings with Reciprocal Rank Fusion."""
+        n = min(max(k, RRF_CANDIDATES), len(self.chunks))
+        rankings = (self._bm25_ids(query, n),
+                    self._semantic_index().search(query, n))
+        scores: dict[int, float] = {}
+        for ranking in rankings:
+            for rank, chunk_id in enumerate(ranking, 1):
+                points = 1 / (RRF_K + rank)
+                scores[chunk_id] = scores.get(chunk_id, 0.0) + points
+        return sorted(scores, key=lambda i: scores[i], reverse=True)[:k]
+
