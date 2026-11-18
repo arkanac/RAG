@@ -89,4 +89,3 @@ class Retriever:
                 points = 1 / (RRF_K + rank)
                 scores[chunk_id] = scores.get(chunk_id, 0.0) + points
         return sorted(scores, key=lambda i: scores[i], reverse=True)[:k]
-
