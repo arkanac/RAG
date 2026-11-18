@@ -4,6 +4,7 @@ import json
 from tqdm import tqdm
 from src.models import (Chunk, MinimalSource, RagDataset, MinimalSearchResults,
                         StudentSearchResults)
+from .embedding import SemanticIndex
 
 
 class Retriever:
@@ -18,30 +19,47 @@ class Retriever:
             chunk_list: list[dict] = json.load(f)
             self.chunks += [Chunk.model_validate(chunk) for chunk
                             in chunk_list]
+        self.processed_dir = processed_dir
+        self.semantic: SemanticIndex | None = None
 
-    def search(self, query: str, k: int) -> list[MinimalSource]:
-        k = min(k, len(self.chunks))
+    def _semantic_index(self) -> SemanticIndex:
+        """Load the semantic index on first use, with its own model."""
+        if self.semantic is None:
+            folder = str(Path(self.processed_dir) / "semantic")
+            index = SemanticIndex(SemanticIndex.read_model(folder))
+            index.load(folder, len(self.chunks))
+            self.semantic = index
+        return self.semantic
+
+    def _bm25_ids(self, query: str, k: int) -> list[int]:
+        """Return the ids of the k best chunks according to BM25."""
         tokens = bm25s.tokenize(query, stopwords="en", show_progress=False)
-        ids, _ = self.bm25.retrieve(tokens, k=k)
-        source_list: list[MinimalSource] = []
-        for num in ids[0]:
-            chunk = self.chunks[num]
-            min_s = MinimalSource(file_path=chunk.file_path,
-                                  first_character_index=chunk.
-                                  first_character_index,
-                                  last_character_index=chunk.
-                                  last_character_index)
-            source_list.append(min_s)
-        return source_list
+        results, _ = self.bm25.retrieve(tokens, k=k)
+        return [int(i) for i in results[0]]
 
-    def search_dataset(self, dataset_path: str, save_directory: str, k: int
-                       ) -> None:
+    def search(self, query: str, k: int,
+               method: str = "bm25") -> list[MinimalSource]:
+        """Return the top-k sources for a query."""
+        k = min(k, len(self.chunks))
+        if method == "semantic":
+            ids = self._semantic_index().search(query, k)
+        else:
+            ids = self._bm25_ids(query, k)
+        return [MinimalSource(file_path=self.chunks[i].file_path,
+                              first_character_index=self.chunks[i]
+                              .first_character_index,
+                              last_character_index=self.chunks[i]
+                              .last_character_index)
+                for i in ids]
+
+    def search_dataset(self, dataset_path: str, save_directory: str, k: int,
+                       method: str = "bm25") -> None:
         with open(dataset_path, encoding="utf-8") as f:
             rag_questions = json.load(f)
             dataset = RagDataset.model_validate(rag_questions)
             msr_list: list[MinimalSearchResults] = []
         for question in tqdm(dataset.rag_questions):
-            answer = self.search(question.question, k)
+            answer = self.search(question.question, k, method)
             min_srch_r = MinimalSearchResults(question_id=question.question_id,
                                               question=question.question,
                                               retrieved_sources=answer)

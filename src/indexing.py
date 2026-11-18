@@ -1,12 +1,14 @@
 from pathlib import Path
 from src.models import Chunk
+from .embedding import EMBEDDING_MODEL, SemanticIndex
 import bm25s
 import json
 
 
 class Indexer:
-    def build_index(self, chunks: list[Chunk], processed_dir: str) -> None:
-        Path(processed_dir).mkdir(parents=True, exist_ok=True)
+    def build_index(self, chunks: list[Chunk], processed_dir: str,
+                    semantic: bool = False,
+                    embedding_model: str = EMBEDDING_MODEL) -> None:
         texts: list[str] = []
         texts += [(chunk.file_path + " " + chunk.text) for chunk in chunks]
         tokens = bm25s.tokenize(texts, stopwords="en")
@@ -19,3 +21,8 @@ class Indexer:
         with open(c_path, "w", encoding="utf-8") as f:
             chunk_list += [chunk.model_dump() for chunk in chunks]
             json.dump(chunk_list, f)
+        semantic_dir = str(Path(processed_dir) / "semantic")
+        if semantic:
+            SemanticIndex(embedding_model).build(texts, semantic_dir)
+        else:
+            SemanticIndex.remove(semantic_dir)

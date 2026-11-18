@@ -34,5 +34,5 @@ torch = [{ index = "pytorch-cpu" }]
 exclude = ["(^|/)data/", "(^|/)\\.venv/"]
 
 [[tool.mypy.overrides]]
-module = ["bm25s", "bm25s.*"]
+module = ["bm25s", "bm25s.*", "fastembed", "fastembed.*"]
 ignore_missing_imports = true

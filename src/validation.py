@@ -1,6 +1,15 @@
 """Validation of CLI parameters."""
 
 MAX_CHUNK_SIZE_LIMIT = 2000
+METHODS = ("bm25", "semantic")
+
+
+def validate_method(method: object) -> str:
+    """Return method if it is a supported retrieval method."""
+    if method not in METHODS:
+        raise ValueError(f"method must be one of {', '.join(METHODS)}, "
+                         f"got {method!r}")
+    return str(method)
 
 
 def validate_chunk_size(max_chunk_size: object) -> int:
