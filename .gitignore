@@ -11,3 +11,5 @@ robustness.sh
 chunk_sweep.sh
 .vscode/
 embed_sweep.sh
+bench_embeddings.py
+bench_embeddings.log
