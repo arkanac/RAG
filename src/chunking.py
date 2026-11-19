@@ -8,74 +8,64 @@ DOC_DIRS = {"docs"}
 
 
 class Chunker:
+    """Split the corpus files into chunks with exact character offsets."""
+
     def __init__(self, max_chunk_size: int) -> None:
-        self.mx_ck_size = max_chunk_size
-        self.splitters: dict[str, RecursiveCharacterTextSplitter
-                             ] = self._make_splitters(self.mx_ck_size)
+        """Create one splitter per supported file type."""
+        self.max_chunk_size = max_chunk_size
+        self.splitters = self._make_splitters(max_chunk_size)
 
     @staticmethod
     def _is_useful(path: Path, root: Path) -> bool:
         """Keep only the files that can contain an answer."""
         parts = path.relative_to(root).parts
-        at_root = len(parts) == 2
         top_dir = parts[1] if len(parts) > 2 else ""
         if path.suffix == ".py":
             return top_dir in CODE_DIRS
-        return at_root or top_dir in DOC_DIRS
+        return len(parts) == 2 or top_dir in DOC_DIRS
 
     def find_files(self, raw_dir: str) -> dict[str, list[Path]]:
+        """Return the useful files of raw_dir, sorted, grouped by extension."""
         data = Path(raw_dir)
         if not data.is_dir():
-            print("No data specified")
-            return {}
-        data_dict: dict[str, list[Path]] = {".py": [], ".md": [], ".txt": []}
-        for file in data.rglob("*"):
-            if file.is_file() and self._is_useful(file, data):
-                s = file.suffix
-                if s in data_dict:
-                    data_dict[s].append(file)
-        for key in data_dict:
-            data_dict[key].sort()
-        return data_dict
+            raise FileNotFoundError(f"{raw_dir} is not a directory")
+        files: dict[str, list[Path]] = {".py": [], ".md": [], ".txt": []}
+        for file in sorted(data.rglob("*")):
+            if (file.suffix in files and file.is_file()
+                    and self._is_useful(file, data)):
+                files[file.suffix].append(file)
+        return files
 
-    def _make_splitters(self, max_chunk_size: int) -> dict[
-            str, RecursiveCharacterTextSplitter]:
-        nb = max_chunk_size // 10
-        py_splitter = RecursiveCharacterTextSplitter.from_language(
-            language=Language.PYTHON, chunk_size=max_chunk_size,
-            chunk_overlap=nb, add_start_index=True)
-        md_splitter = RecursiveCharacterTextSplitter.from_language(
-            language=Language.MARKDOWN, chunk_size=max_chunk_size,
-            chunk_overlap=nb, add_start_index=True)
-        splitter_dict = {".py": py_splitter, ".md": md_splitter,
-                         ".txt": md_splitter}
-        return splitter_dict
+    @staticmethod
+    def _make_splitters(max_chunk_size: int
+                        ) -> dict[str, RecursiveCharacterTextSplitter]:
+        """Build the Python and Markdown splitters with a 10 % overlap."""
+        def make(language: Language) -> RecursiveCharacterTextSplitter:
+            return RecursiveCharacterTextSplitter.from_language(
+                language=language, chunk_size=max_chunk_size,
+                chunk_overlap=max_chunk_size // 10, add_start_index=True)
+        markdown = make(Language.MARKDOWN)
+        return {".py": make(Language.PYTHON), ".md": markdown,
+                ".txt": markdown}
 
     def chunk_file(self, path: Path) -> list[Chunk]:
-        text = path.read_text(encoding='utf-8', errors='replace')
-        splitter = self.splitters[path.suffix]
-        docs = splitter.create_documents([text])
-        chunks: list[Chunk] = []
-        for doc in docs:
-            start = doc.metadata["start_index"]
-            if start == -1:
-                continue
-            end = start + len(doc.page_content)
-            chunks.append(Chunk(file_path=str(path),
-                                first_character_index=start,
-                                last_character_index=end,
-                                text=doc.page_content))
-        return chunks
+        """Split one file into chunks."""
+        text = path.read_text(encoding="utf-8", errors="replace")
+        docs = self.splitters[path.suffix].create_documents([text])
+        return [Chunk(file_path=str(path),
+                      first_character_index=doc.metadata["start_index"],
+                      last_character_index=(doc.metadata["start_index"]
+                                            + len(doc.page_content)),
+                      text=doc.page_content)
+                for doc in docs if doc.metadata["start_index"] != -1]
 
     def chunk_corpus(self, raw_dir: str) -> list[Chunk]:
-        file_dict = self.find_files(raw_dir)
+        """Chunk every useful file of the corpus."""
         chunks: list[Chunk] = []
-        for extension, paths in file_dict.items():
+        for extension, paths in self.find_files(raw_dir).items():
             for path in tqdm(paths, desc=extension):
                 try:
-                    chunk_lst = self.chunk_file(path)
+                    chunks.extend(self.chunk_file(path))
                 except OSError as err:
                     print(f"{err} at path {path}")
-                    continue
-                chunks.extend(chunk_lst)
         return chunks

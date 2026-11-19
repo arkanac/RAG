@@ -3,10 +3,19 @@ from src.models import (MinimalSource, RagDataset, StudentSearchResults,
 import json
 
 IOU_THRESHOLD = 0.05
+KS = (1, 3, 5, 10)
 
 
 def inter_of_union(retrieved: MinimalSource, expected: MinimalSource
                    ) -> float:
+    """Compute the intersection over union of two sources.
+    Args:
+        retrieved: Source returned by the search.
+        expected: Source of the reference answer.
+    Returns:
+        Overlap length divided by combined length, between 0 and 1.
+        0 if the sources are in different files.
+    """
     if retrieved.file_path != expected.file_path:
         return 0.0
     intersection = max(0, min(retrieved.last_character_index,
@@ -24,6 +33,16 @@ def inter_of_union(retrieved: MinimalSource, expected: MinimalSource
 
 def recall(retrieved: list[MinimalSource], expected: list[MinimalSource],
            k: int) -> float:
+    """Compute the recall@k of one question.
+    An expected source counts as found when one of the first k retrieved
+    sources overlaps it with an IoU of at least IOU_THRESHOLD.
+    Args:
+        retrieved: Sources returned by the search, best first.
+        expected: Sources of the reference answer.
+        k: Number of retrieved sources taken into account.
+    Returns:
+        Share of expected sources found, between 0 and 1.
+    """
     count = 0
     if not expected:
         return 0.0
@@ -36,7 +55,17 @@ def recall(retrieved: list[MinimalSource], expected: list[MinimalSource],
     return count / total_count
 
 
-def evaluate(result_path: str, dataset_path: str) -> None:
+def evaluate(result_path: str, dataset_path: str) -> dict[int, float]:
+    """Compute the mean recall@k of a search results file.
+    Args:
+        result_path: StudentSearchResults file written by search_dataset.
+        dataset_path: Matching dataset of answered questions.
+    Returns:
+        Mean recall for k = 1, 3, 5 and 10, between 0 and 1.
+    Raises:
+        ValueError: If the dataset has no answered question, or if no
+            question of the results is in the dataset.
+    """
     with open(result_path, encoding="utf-8") as f:
         results = json.load(f)
         v_result = StudentSearchResults.model_validate(results)
@@ -48,18 +77,12 @@ def evaluate(result_path: str, dataset_path: str) -> None:
         if isinstance(question, AnsweredQuestion):
             q_dict[question.question_id] = question.sources
     if not q_dict:
-        print("No answered questions found in the dataset.")
-        return
-    for k in [1, 3, 5, 10]:
-        recall_list: list[float] = []
-        for result in v_result.search_results:
-            expected = q_dict.get(result.question_id)
-            if expected is None:
-                continue
-            recall_list.append(
-                recall(result.retrieved_sources, expected, k))
-        if not recall_list:
-            print("No question of the results matches the dataset.")
-            return
-        recall_k = sum(recall_list) / len(recall_list)
-        print(f"Recall@{k}: {recall_k:.3f} ({recall_k:.1%})")
+        raise ValueError("no answered questions found in the dataset")
+    pairs = [(result.retrieved_sources, q_dict[result.question_id])
+             for result in v_result.search_results
+             if result.question_id in q_dict]
+    if not pairs:
+        raise ValueError("no question of the results matches the dataset")
+    return {k: sum(recall(retrieved, expected, k)
+                   for retrieved, expected in pairs) / len(pairs)
+            for k in (1, 3, 5, 10)}

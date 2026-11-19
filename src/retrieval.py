@@ -59,24 +59,19 @@ class Retriever:
 
     def search_dataset(self, dataset_path: str, save_directory: str, k: int,
                        method: str = "bm25") -> None:
+        """Search every question of a dataset and save the results."""
         with open(dataset_path, encoding="utf-8") as f:
-            rag_questions = json.load(f)
-            dataset = RagDataset.model_validate(rag_questions)
-            msr_list: list[MinimalSearchResults] = []
-        for question in tqdm(dataset.rag_questions):
-            answer = self.search(question.question, k, method)
-            min_srch_r = MinimalSearchResults(question_id=question.question_id,
-                                              question=question.question,
-                                              retrieved_sources=answer)
-            msr_list.append(min_srch_r)
-        stud_search_r = StudentSearchResults(search_results=msr_list, k=k)
-        Path(save_directory).mkdir(parents=True, exist_ok=True)
-        path1 = Path(save_directory)
-        path2 = Path(dataset_path).name
-        with open(path1 / path2, "w",
-                  encoding="utf-8") as f:
-            f.write(stud_search_r.model_dump_json(indent=2))
-        print(f"Saved student_search_results to {path1}/{path2}")
+            dataset = RagDataset.model_validate(json.load(f))
+        results = [MinimalSearchResults(
+                       question_id=q.question_id, question=q.question,
+                       retrieved_sources=self.search(q.question, k, method))
+                   for q in tqdm(dataset.rag_questions)]
+        output = StudentSearchResults(search_results=results, k=k)
+        out_dir = Path(save_directory)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out_path = out_dir / Path(dataset_path).name
+        out_path.write_text(output.model_dump_json(indent=2), encoding="utf-8")
+        print(f"Saved student_search_results to {out_path}")
 
     def _hybrid_ids(self, query: str, k: int) -> list[int]:
         """Fuse the BM25 and semantic rankings with Reciprocal Rank Fusion."""
